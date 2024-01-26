@@ -6,16 +6,10 @@
         xmlns:local="clr-namespace:VolumeMixer"
         mc:Ignorable="d"
         Title="MainWindow" Width="723" Height="327">
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="94*"/>
-            <ColumnDefinition Width="107*"/>
-            <ColumnDefinition Width="522*"/>
-        </Grid.ColumnDefinitions>
-        <StackPanel x:Name="SliderLayoutPanel" Grid.Column="2" Height="311" VerticalAlignment="Top"/>
-        <StackPanel x:Name="NameLayoutPanel" Grid.Column="1"/>
-        <StackPanel x:Name="ImageLayoutPanel">
-            <Image Height="100" Width="100"/>
-        </StackPanel>
+<Grid>
+    <Border BorderBrush="Black" BorderThickness="1" Margin="10,10,10,11">
+            <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch">
+            </ListView>
+        </Border>
     </Grid>
 </Window>

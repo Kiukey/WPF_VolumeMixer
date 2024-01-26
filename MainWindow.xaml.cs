@@ -1,56 +1,43 @@
 ﻿using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Drawing;
+using System.Windows.Interop;
+using System.Windows.Media.Imaging;
+using VolumeMixer.Classes;
+using DIcon = System.Drawing.Icon;
 
 namespace VolumeMixer
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    /// 
-     
-
     public partial class MainWindow : Window
     {
 
-        Dictionary<Slider, AudioSessionControl> sliders = new Dictionary<Slider, AudioSessionControl>();
+        MMDevice defaultDevice = null;
+        Dictionary<int,ApplicationUIData> applications = new Dictionary<int, ApplicationUIData>();
+
         public MainWindow()
         {
+            defaultDevice = GetDefaultDevice();
             InitializeComponent();
-            GenerateSliders(GetAllAppsFromDefaultDevice());
+            GenerateSliders(defaultDevice.AudioSessionManager.Sessions);
+            defaultDevice.AudioSessionManager.OnSessionCreated += (_object, _session) => 
+            {
+                Application.Current.Dispatcher.Invoke(() => { OnNewAppDetected(_object, _session); });
+            };
         }
 
-
-        //private void TestButton_Click(object sender, RoutedEventArgs e)
-        //{
-        //    //MMDeviceEnumerator _outPutList = new MMDeviceEnumerator();
-        //    //MMDevice _defautDevice = _outPutList.GetDefaultAudioEndpoint(DataFlow.Render,Role.Multimedia & Role.Communications & Role.Console);
-        //    //_defautDevice.AudioSessionManager.SimpleAudioVolume.Volume = 0;
-        //    //Console.WriteLine($"masterVolume -> { _defautDevice.AudioEndpointVolume.MasterVolumeLevelScalar}");
-        //    //SessionCollection _apps = GetAllAppsFromDefaultDevice();
-
-        //}
-
-        private SessionCollection GetAllAppsFromDefaultDevice()
+        private MMDevice GetDefaultDevice()
         {
             MMDeviceEnumerator _outPutList = new MMDeviceEnumerator();
-            MMDevice _defautDevice = _outPutList.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia & Role.Communications & Role.Console);
-            return _defautDevice.AudioSessionManager.Sessions;
+            return _outPutList.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia & Role.Communications & Role.Console);
         }
         private void GenerateSliders(SessionCollection _apps)
         {
             for (int _i = 0; _i < _apps.Count ; _i++)
             {
-                //Slider _slider = new Slider();
-                //sliders.Add(_apps[_i], _slider);
-                //LayoutPanel.Children.Add(_slider);
-                //_slider.Width = LayoutPanel.Width;
-                //_slider.VerticalAlignment = VerticalAlignment.Bottom;
-                //_slider.Margin = new Thickness(0,50, 0, 0);
                 AddNewApp(_apps[_i]);
 
                 //LayoutPanel.
@@ -60,41 +47,89 @@ namespace VolumeMixer
         private void AddNewApp(AudioSessionControl _app)
         {
             Process _application = Process.GetProcessById((int)_app.GetProcessID);
-            //slider side
-            Slider _slider = new Slider();
-            sliders.Add(_slider, _app);
-            SliderLayoutPanel.Children.Add(_slider);
-            _slider.Width = SliderLayoutPanel.Width;
-            _slider.VerticalAlignment = VerticalAlignment.Bottom;
-            _slider.Margin = new Thickness(0, 50, 0, 0);
-            _slider.ValueChanged += OnSliderChanged;
 
-            //name side
-            TextBlock _appName = new TextBlock();
-            NameLayoutPanel.Children.Add(_appName);
-            _appName.Text = _application.ProcessName;
-            _appName.Margin = _slider.Margin;
-
-            //image side
-            Image _appIcon = new Image();
-            Console.WriteLine($" salut ? {_application.MainModule.FileName}");
+            WrapPanel _panel = new WrapPanel();
             
-
-            //IAudioSessionControl _app = _app as IAudioSessionControl;
-
-            
-            //Uri _fileUri = new Uri(_application.MainModule.FileName);
-            //_appIcon.Source = new BitmapImage(_fileUri);
-            //_appIcon.Margin = _slider.Margin;
+            //todo CreateWrapPanel
+            ApplicationUIData _data = new ApplicationUIData(_app,_application) ;
+            applications.Add(_application.Id, _data);
+            ApplicationList.Items.Add(_data.Container);
+            _data.Container.Width = ApplicationList.Width;
+            //_data.VolumeSlider.
+            //applications.Add(_application.Id,_data);
+            //TODO AddWrapPanel to listView
+            //if (_application.BasePriority == 0) return;
+            //_application.EnableRaisingEvents = true;
+            //_application.Exited += (_object, _args) =>
+            //{
+            //    Application.Current.Dispatcher.Invoke(() => { OnApplicationClosed(_object, _args); });
+            //};
         }
 
-        private void OnSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        void OnNewAppDetected(object _sender, IAudioSessionControl _newSession)
         {
-            Slider _slider = (Slider)sender;
-            if (!sliders.ContainsKey(_slider))return;
-
-            sliders[_slider].SimpleAudioVolume.Volume = (float)e.NewValue / (float)_slider.Maximum;
-            Console.WriteLine(e.NewValue);
+            AddNewApp(new AudioSessionControl(_newSession));
         }
+
+        //void OnApplicationClosed(object _sender, EventArgs e)
+        //{
+        //    Process _closingApp = (Process)_sender;
+        //    if (_closingApp == null || !applications.ContainsKey(_closingApp.Id)) return;
+        //    ApplicationData _data = applications[_closingApp.Id];
+        //    ImageLayoutPanel.Children.Remove(_data.Image);
+        //    NameLayoutPanel.Children.Remove(_data.Text);
+        //    SliderLayoutPanel.Children.Remove(_data.VolumeSlider);
+        //    applications.Remove(_closingApp.Id);
+        //}
     }
 }
+
+#region comments
+//Slider _slider = new Slider();
+//sliders.Add(_slider, _app);
+//SliderLayoutPanel.Children.Add(_slider);
+//_slider.Width = SliderLayoutPanel.Width;
+//_slider.VerticalAlignment = VerticalAlignment.Bottom;
+//_slider.Margin = new Thickness(0, 30, 0, 0);
+//_slider.ValueChanged += OnSliderChanged;
+//_slider.Maximum = 1f;
+//_slider.Value = _app.SimpleAudioVolume.Volume;
+
+//TextBlock _appName = new TextBlock();
+//NameLayoutPanel.Children.Add(_appName);
+//_appName.Text = _application.ProcessName;
+//_appName.Margin = _slider.Margin;
+
+//Console.WriteLine($" salut ? {_application.BasePriority}");
+//if (_application.BasePriority ==0 ) return;
+//DIcon _icon = DIcon.ExtractAssociatedIcon(_application.MainModule.FileName); 
+//Image _appIcon = new Image();
+//ImageLayoutPanel.Children.Add(_appIcon);
+//_appIcon.Source = GetIconToBitmapImage(_icon);
+//_appIcon.Width = 35;
+//_appIcon.Height = 35;
+//_appIcon.Margin = new Thickness(0,20,0,0);
+
+//Slider GenerateSlider(AudioSessionControl _audioApp)
+//{
+//    //slider side
+//    Slider _slider = new Slider();
+//    //sliders.Add(_slider, _audioApp);
+//    SliderLayoutPanel.Children.Add(_slider);
+//    _slider.Width = SliderLayoutPanel.Width;
+//    _slider.VerticalAlignment = VerticalAlignment.Bottom;
+//    _slider.Margin = new Thickness(0, 30, 0, 0);
+//    _slider.Maximum = 1f;
+//    _slider.Value = _audioApp.SimpleAudioVolume.Volume;
+//    return _slider;
+//}
+
+//{
+//    //name side
+//    TextBlock _appName = new TextBlock();
+//    NameLayoutPanel.Children.Add(_appName);
+//    _appName.Text = _application.ProcessName;
+//    _appName.Margin = new Thickness(0,33, 0,0);
+//    return _appName;
+//}
+#endregion
