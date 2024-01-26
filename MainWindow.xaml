@@ -1,0 +1,21 @@
+﻿<Window x:Name="window" x:Class="VolumeMixer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:VolumeMixer"
+        mc:Ignorable="d"
+        Title="MainWindow" Width="723" Height="327">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="94*"/>
+            <ColumnDefinition Width="107*"/>
+            <ColumnDefinition Width="522*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel x:Name="SliderLayoutPanel" Grid.Column="2" Height="311" VerticalAlignment="Top"/>
+        <StackPanel x:Name="NameLayoutPanel" Grid.Column="1"/>
+        <StackPanel x:Name="ImageLayoutPanel">
+            <Image Height="100" Width="100"/>
+        </StackPanel>
+    </Grid>
+</Window>
