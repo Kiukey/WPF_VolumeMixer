@@ -1,7 +1,6 @@
 ﻿using NAudio.CoreAudioApi;
 using System;
 using System.Diagnostics;
-
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
@@ -9,8 +8,7 @@ using System.Windows.Media.Imaging;
 
 using Image = System.Windows.Controls.Image;
 using DIcon = System.Drawing.Icon;
-using System.Drawing;
-using System.Windows.Media;
+
 
 namespace VolumeMixer.Classes
 {
@@ -21,52 +19,58 @@ namespace VolumeMixer.Classes
         Image image = null;
         Slider volumeSlider = null;
         TextBlock text = null;
-        AudioSessionControl audioSession = null;
+        AudioApplication audioApplication = null;
+        public event Action<ApplicationUIData,int> onApplicationClosed = null;
 
         public Image Image => image;
         public Slider VolumeSlider => volumeSlider;
         public TextBlock Text => text;
         public WrapPanel Container => container;
 
-        public ApplicationUIData(AudioSessionControl _audioSession,Process _application)
+        public ApplicationUIData(AudioApplication _application)
         {
-            audioSession = _audioSession;
+            audioApplication = _application;
             container = new WrapPanel();
             container.Orientation = Orientation.Horizontal;
             container.HorizontalAlignment = HorizontalAlignment.Stretch;
             container.VerticalAlignment = VerticalAlignment.Stretch;
             container.ClipToBounds = true;
             //Creating widgets
-            volumeSlider = GenerateSlider(_audioSession);
-            text = GenerateTextBlock(_application);
-            image = GenerateImage(_application);
+            volumeSlider = GenerateSlider(audioApplication);
+            text = GenerateTextBlock(_application.ManagedProcess);
+            image = GenerateImage(_application.ManagedProcess);
             //adding widgets to the wrapPanel
             container.Children.Add(image);
             container.Children.Add(text);
             container.Children.Add(volumeSlider);
 
             volumeSlider.ValueChanged += OnSliderValueChanged;
+            //_application.ManagedProcess.Exited += OnApplicationClose;
+            if (_application.ManagedProcess.BasePriority == 0) return;
+            //_application.EnableRaisingEvents = true;
+            _application.onProcessEnd += (audioApplication) =>
+            {
+                Application.Current.Dispatcher.Invoke(() => { OnApplicationClose(audioApplication); });
+            };
         }
 
         private void OnSliderValueChanged(object _sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Slider _slider = (Slider)_sender;
             if (_slider == null) return;
-            audioSession.SimpleAudioVolume.Volume = (float)e.NewValue / (float)_slider.Maximum;
+            audioApplication.ApplicationVolume = (float)e.NewValue / (float)_slider.Maximum;
             Console.WriteLine(e.NewValue);
         }
-
-
-        private Slider GenerateSlider(AudioSessionControl _audioApp)
+        private Slider GenerateSlider(AudioApplication _audioApp)
         {
             //slider side
             Slider _slider = new Slider();
             _slider.Maximum = 1f;
-            _slider.Value = _audioApp.SimpleAudioVolume.Volume;
+            _slider.Value = _audioApp.ApplicationVolume;
             _slider.HorizontalAlignment = HorizontalAlignment.Center;
             _slider.VerticalAlignment = VerticalAlignment.Center;
             _slider.HorizontalContentAlignment = HorizontalAlignment.Right;
-            _slider.Width = 500;
+            _slider.Width = 300;
             //_slider.ClipToBounds = true;
             
             return _slider;
@@ -80,15 +84,12 @@ namespace VolumeMixer.Classes
             _appName.VerticalAlignment = VerticalAlignment.Center;
             return _appName;
         }
-
         private BitmapSource GetIconToBitmapImage(DIcon _icon)
         {
             if (_icon == null) return null;
             return Imaging.CreateBitmapSourceFromHBitmap(_icon.ToBitmap().GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
         }
-
-
-        Image GenerateImage(Process _application)
+        private Image GenerateImage(Process _application)
         {
             Image _appIcon = new Image();
             _appIcon.Width = 35;
@@ -99,5 +100,20 @@ namespace VolumeMixer.Classes
             _appIcon.Source = GetIconToBitmapImage(_icon);
             return _appIcon;
         }
+        void RemoveController()
+        {
+            container.Children.Remove(image);
+            container.Children.Remove(text);
+            container.Children.Remove(volumeSlider);
+            volumeSlider = null;
+            text = null;
+            text = null;
+        }
+        void OnApplicationClose(AudioApplication _app)
+        {
+            RemoveController();
+            onApplicationClosed?.Invoke(this, _app.ProcessID);
+        }
+
     }
 }

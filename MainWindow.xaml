@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VolumeMixer"
         mc:Ignorable="d"
-        Title="MainWindow" Width="723" Height="327">
-<Grid>
-    <Border BorderBrush="Black" BorderThickness="1" Margin="10,10,10,11">
-            <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch">
-            </ListView>
+        Title="Mixer" Width="431" Height="280" HorizontalContentAlignment="Stretch" Topmost="True" MinWidth="443" MaxWidth="443" Background="#3FFFFFFF" Foreground="Black" SizeToContent="Width" AutomationProperties.IsRowHeader="True">
+    <Grid>
+        <Border BorderBrush="Black" BorderThickness="1" Margin="10,49,10,11">
+            <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch" Background="#3FFFFFFF" BorderBrush="#00ABADB3" Foreground="Black"/>
         </Border>
+        <ComboBox x:Name="deviceComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="184" SelectionChanged="OnMainDeviceChanged"/>
     </Grid>
 </Window>

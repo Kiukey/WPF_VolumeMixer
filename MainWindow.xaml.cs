@@ -1,86 +1,109 @@
-﻿using NAudio.CoreAudioApi;
-using NAudio.CoreAudioApi.Interfaces;
+﻿using AudioSwitcher.AudioApi;
+using AudioSwitcher.AudioApi.CoreAudio;
+using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Interop;
-using System.Windows.Media.Imaging;
 using VolumeMixer.Classes;
-using DIcon = System.Drawing.Icon;
+
+using DeviceRole = NAudio.CoreAudioApi.Role;
+using DeviceState = NAudio.CoreAudioApi.DeviceState;
+//using AudioSwitcher.AudioApi.CoreAudio;
+//using Role = 
 
 namespace VolumeMixer
 {
     public partial class MainWindow : Window
     {
-
-        MMDevice defaultDevice = null;
-        Dictionary<int,ApplicationUIData> applications = new Dictionary<int, ApplicationUIData>();
-
+        Dictionary<int,MMDevice> devices = new Dictionary<int,MMDevice>();
+        Mixer defaultDeviceMixer = null;
+        CoreAudioController controller = null;
         public MainWindow()
         {
-            defaultDevice = GetDefaultDevice();
             InitializeComponent();
-            GenerateSliders(defaultDevice.AudioSessionManager.Sessions);
-            defaultDevice.AudioSessionManager.OnSessionCreated += (_object, _session) => 
+            //set up output 
+            RegisterAllDevices();
+            defaultDeviceMixer = new Mixer(GetDefaultDevice());
+            GenerateSliders(defaultDeviceMixer);
+            defaultDeviceMixer.onNewApplicationDiscovered += (_audioApp) => 
             {
-                Application.Current.Dispatcher.Invoke(() => { OnNewAppDetected(_object, _session); });
+                Application.Current.Dispatcher.Invoke(() => { GenerateUI(_audioApp); });
             };
+            controller = new CoreAudioController();
+            //
         }
 
         private MMDevice GetDefaultDevice()
         {
             MMDeviceEnumerator _outPutList = new MMDeviceEnumerator();
-            return _outPutList.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia & Role.Communications & Role.Console);
+            return _outPutList.GetDefaultAudioEndpoint(DataFlow.Render, DeviceRole.Multimedia & DeviceRole.Communications & DeviceRole.Console);
         }
-        private void GenerateSliders(SessionCollection _apps)
+        private List<MMDevice> GetAllDevices()
         {
-            for (int _i = 0; _i < _apps.Count ; _i++)
+            return devices.Values.ToList();
+        }
+        private void GenerateSliders(Mixer _mixer)
+        {
+            for (int i = 0; i < _mixer.ApplicationCount; i++)
             {
-                AddNewApp(_apps[_i]);
-
-                //LayoutPanel.
+                GenerateUI(_mixer[i]);
             }
         }
 
-        private void AddNewApp(AudioSessionControl _app)
+        void RegisterAllDevices()
         {
-            Process _application = Process.GetProcessById((int)_app.GetProcessID);
+            MMDeviceEnumerator _outputList = new MMDeviceEnumerator();
+            MMDeviceCollection _allDevices = _outputList.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+            for (int i = 0; i < _allDevices.Count; i++)
+            {
+                MMDevice _device = _allDevices[i];
+                devices.Add(i, _device);
+                deviceComboBox.Items.Add(_device.FriendlyName);
+                if (_device.FriendlyName == GetDefaultDevice().FriendlyName)
+                {
+                    deviceComboBox.SelectedIndex = deviceComboBox.Items.Count - 1;
+                }
+            }
+        }
 
-            WrapPanel _panel = new WrapPanel();
-            
-            //todo CreateWrapPanel
-            ApplicationUIData _data = new ApplicationUIData(_app,_application) ;
-            applications.Add(_application.Id, _data);
+        void GenerateUI(AudioApplication _application)
+        {
+            ApplicationUIData _data = new ApplicationUIData(_application);
+            _data.onApplicationClosed += OnAudioAppClosed;
             ApplicationList.Items.Add(_data.Container);
-            _data.Container.Width = ApplicationList.Width;
-            //_data.VolumeSlider.
-            //applications.Add(_application.Id,_data);
-            //TODO AddWrapPanel to listView
-            //if (_application.BasePriority == 0) return;
-            //_application.EnableRaisingEvents = true;
-            //_application.Exited += (_object, _args) =>
-            //{
-            //    Application.Current.Dispatcher.Invoke(() => { OnApplicationClosed(_object, _args); });
-            //};
         }
 
-        void OnNewAppDetected(object _sender, IAudioSessionControl _newSession)
+        void OnAudioAppClosed(ApplicationUIData _closed, int _processID)
         {
-            AddNewApp(new AudioSessionControl(_newSession));
+            ApplicationList.Items.Remove(_closed.Container);
         }
 
-        //void OnApplicationClosed(object _sender, EventArgs e)
-        //{
-        //    Process _closingApp = (Process)_sender;
-        //    if (_closingApp == null || !applications.ContainsKey(_closingApp.Id)) return;
-        //    ApplicationData _data = applications[_closingApp.Id];
-        //    ImageLayoutPanel.Children.Remove(_data.Image);
-        //    NameLayoutPanel.Children.Remove(_data.Text);
-        //    SliderLayoutPanel.Children.Remove(_data.VolumeSlider);
-        //    applications.Remove(_closingApp.Id);
-        //}
+        private void OnMainDeviceChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            ComboBox _sender = (ComboBox)sender;
+            if (_sender == null || !devices.ContainsKey(_sender.SelectedIndex)) return;
+            MMDevice _defaultDevice = devices[_sender.SelectedIndex];
+            if (_defaultDevice.FriendlyName == GetDefaultDevice().FriendlyName) return;
+            //MMDeviceEnumerator _enum = new MMDeviceEnumerator();
+            //CoreAudioController _controller = new CoreAudioController();
+            //AudioSwitcher.AudioApi.CoreAudio.CoreAudioDevice _device = new CoreAudioDevice(_device);
+            controller.SetDefaultDevice(GetDeviceFromController(_defaultDevice));
+            
+           
+        }
+
+        CoreAudioDevice GetDeviceFromController(MMDevice _device)
+        {
+            List<CoreAudioDevice> _devices = controller.GetDevices(DeviceType.Playback,AudioSwitcher.AudioApi.DeviceState.Active).ToList();
+            foreach (CoreAudioDevice _item in _devices)
+            {
+                Console.WriteLine(_item.FullName);
+                if (_item.FullName == _device.FriendlyName) return _item;
+            }
+            return null;
+        }
     }
 }
 
