@@ -49,6 +49,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <TargetZone>LocalIntranet</TargetZone>
@@ -58,6 +59,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>speaker_3760.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AudioSwitcher.AudioApi, Version=3.0.0.209, Culture=neutral, PublicKeyToken=fda5729e2db3a64f, processorArchitecture=MSIL">
@@ -129,8 +133,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Classes\ApplicationUIData.cs" />
-    <Compile Include="Classes\AudioApplication.cs" />
-    <Compile Include="Classes\Mixer.cs" />
+    <Compile Include="Classes\Mixer\AudioApplication.cs" />
+    <Compile Include="Classes\Mixer\Mixer.cs" />
+    <Compile Include="Classes\SoundInputManager\SoundInputManager.cs" />
+    <Compile Include="Classes\Utils.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -176,6 +182,17 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Ressources\free-microphone-icon-342-thumb.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="free-microphone-icon-342-thumb.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="speaker_3760.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="speaker_3760.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

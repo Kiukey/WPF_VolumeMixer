@@ -5,11 +5,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VolumeMixer"
         mc:Ignorable="d"
-        Title="Mixer" Width="431" Height="280" HorizontalContentAlignment="Stretch" Topmost="True" MinWidth="443" MaxWidth="443" Background="#3FFFFFFF" Foreground="Black" SizeToContent="Width" AutomationProperties.IsRowHeader="True">
-    <Grid>
-        <Border BorderBrush="Black" BorderThickness="1" Margin="10,49,10,11">
-            <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch" Background="#3FFFFFFF" BorderBrush="#00ABADB3" Foreground="Black"/>
-        </Border>
-        <ComboBox x:Name="deviceComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="184" SelectionChanged="OnMainDeviceChanged"/>
-    </Grid>
+        Title="Mixer" Width="460" Height="280" HorizontalContentAlignment="Stretch" Topmost="True" MinWidth="460" MaxWidth="460" Background="#3FFFFFFF" Foreground="Black" SizeToContent="Width" AutomationProperties.IsRowHeader="True" Opacity="1" Icon="/speaker_3760.png">
+
+    <TabControl Opacity="1">
+        <TabItem Header="Mixer">
+            <Grid>
+                <Border BorderBrush="Black" BorderThickness="1" Margin="10,48,10,11">
+                    <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch" Background="#3FFFFFFF" BorderBrush="#00ABADB3" Foreground="Black"/>
+                </Border>
+                <ComboBox x:Name="deviceComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="OnOutputMainDeviceChanged"/>
+                <TextBlock x:Name="___No_Name_" HorizontalAlignment="Left" Margin="198,13,0,0" TextWrapping="Wrap" Text="masterVolume" VerticalAlignment="Top" RenderTransformOrigin="0.486,-1.812" FontSize="10"/>
+                <Slider x:Name="masterVolumeSlider" Margin="290,12,0,0" VerticalAlignment="Top" ValueChanged="OnMasterVolumeChanged" Maximum="1" AutoToolTipPrecision="3" AutoToolTipPlacement="TopLeft" HorizontalAlignment="Left" Width="131"/>
+            </Grid>
+        </TabItem>
+
+        <TabItem Header="Mic">
+            <Grid>
+                <ComboBox x:Name="captureDevicesComboBox" Margin="0,32,0,0" HorizontalAlignment="Center" Width="212" Height="27" VerticalAlignment="Top" SelectionChanged="OnInputDeviceChanged"></ComboBox>
+                <Label Content="Mic Volume" HorizontalAlignment="Left" Margin="83,109,0,0" VerticalAlignment="Top" Width="65" Height="22" UseLayoutRounding="False" FontSize="10"/>
+                <Slider x:Name="microphoneVolume" Margin="163,113,0,0" HorizontalAlignment="Left" Width="230" Height="18" VerticalAlignment="Top" ValueChanged="OnMicrophoneVolumeChanged" Maximum="1"/>
+                <Image x:Name="devicePicture" HorizontalAlignment="Left" Height="46" Margin="20,100,0,0" VerticalAlignment="Top" Width="45" Source ="Ressources\free-microphone-icon-342-thumb.png"/>
+            </Grid>
+        </TabItem>
+
+    </TabControl>
 </Window>

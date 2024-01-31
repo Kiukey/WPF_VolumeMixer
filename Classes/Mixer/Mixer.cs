@@ -14,9 +14,10 @@ namespace VolumeMixer.Classes
         public AudioApplication this[int _index] => applicationList[_index];
         public event Action<AudioApplication> onNewApplicationDiscovered = null;
         public event Action<AudioApplication> onAudioApplicationClosed = null;
+        public event Action<float> onMasterVolumeChanged = null;
         MMDevice device = null;
         List<AudioApplication> applicationList = new List<AudioApplication>();
-
+        public float MasterVolume { get => device.AudioEndpointVolume.MasterVolumeLevelScalar; set => device.AudioEndpointVolume.MasterVolumeLevelScalar = value; }
         public int ApplicationCount => applicationList.Count;
 
         ~Mixer() 
@@ -28,6 +29,7 @@ namespace VolumeMixer.Classes
             device = _device;
             CreateAudioApplications(device);
             device.AudioSessionManager.OnSessionCreated += OnNewAppDetected;
+            device.AudioEndpointVolume.OnVolumeNotification += OnMasterVolumeChanged;
         }
         void CreateAudioApplications(MMDevice _device)
         {
@@ -41,9 +43,12 @@ namespace VolumeMixer.Classes
         void CreateAudioApp(AudioSessionControl _audioSession, Process _process)
         {
             AudioApplication _app = new AudioApplication(_audioSession,_process);
-            applicationList.Add(_app);
             _app.onProcessEnd += OnProcessEnd;
             onNewApplicationDiscovered?.Invoke(_app);
+            if(_process.BasePriority == 0)
+                applicationList.Insert(0, _app);
+            else
+                applicationList.Add(_app);
         }
         void OnProcessEnd(AudioApplication _application)
         {
@@ -56,6 +61,11 @@ namespace VolumeMixer.Classes
             AudioSessionControl _audioApp = new AudioSessionControl(_newSession);
             CreateAudioApp(_audioApp, Process.GetProcessById((int)_audioApp.GetProcessID));
             Console.WriteLine("new app detected");
+        }
+
+        void OnMasterVolumeChanged(AudioVolumeNotificationData _data)
+        {
+            onMasterVolumeChanged?.Invoke(_data.MasterVolume);
         }
     }
 }
