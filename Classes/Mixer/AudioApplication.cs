@@ -1,8 +1,9 @@
 ﻿using NAudio.CoreAudioApi;
 using NAudio.CoreAudioApi.Interfaces;
 using System;
+using System.CodeDom;
 using System.Diagnostics;
-using System.Windows.Controls;
+using DIcon = System.Drawing.Icon;
 
 namespace VolumeMixer.Classes
 {
@@ -17,6 +18,7 @@ namespace VolumeMixer.Classes
         public int ProcessID => application.Id;
         public string ProcessName { get; private set;}
         public float ApplicationVolume { get => audioSession.SimpleAudioVolume.Volume; set => audioSession.SimpleAudioVolume.Volume = value; }
+        public DIcon appIcon { get; private set;}
         public AudioSessionControl AudioSession => audioSession;
 
         public AudioApplication(AudioSessionControl _audioSession, Process _application)
@@ -26,14 +28,29 @@ namespace VolumeMixer.Classes
 
             audioSession.RegisterEventClient(this);
             ProcessName = ManagedProcess.ProcessName;
-            if (application.BasePriority == 0)
+            //if (application.BasePriority == 0)
+            //{
+            //    ProcessName = "SystemSounds";
+            //    return;
+            //}
+            try
             {
-                ProcessName = "SystemSounds";
-                return;
+                application.EnableRaisingEvents = true;
+                application.Exited += OnProcessEnd;
+                appIcon = Utils.GetIconFromFile(_application.MainModule.FileName);
             }
-            
-            application.EnableRaisingEvents = true;
-            application.Exited += OnProcessEnd;
+            catch (Exception ex)
+            {
+                appIcon = Utils.GetIconFromFile(Process.GetCurrentProcess().MainModule.FileName);
+                ProcessName = application.BasePriority == 0 ? "SystemSounds" : ManagedProcess.ProcessName;
+                Console.WriteLine("no enough permission");
+            }
+
+        }
+
+        ~AudioApplication() 
+        {
+            audioSession.UnRegisterEventClient(this);
         }
 
         private void OnProcessEnd(object sender,EventArgs e)
@@ -43,6 +60,7 @@ namespace VolumeMixer.Classes
 
         public void OnVolumeChanged(float _volume, bool _isMuted)
         {
+
             onVolumeChanged?.Invoke(_volume);
         }
 
@@ -75,6 +93,9 @@ namespace VolumeMixer.Classes
         public void OnSessionDisconnected(AudioSessionDisconnectReason _disconnectReason)
         {
             //is not working ?
+            //OnProcessEnd(this,null);
+            //Console.WriteLine("Session ended");
+            Console.WriteLine("Session Ended");
         }
     }
 }

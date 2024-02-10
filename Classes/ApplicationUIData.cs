@@ -36,7 +36,7 @@ namespace VolumeMixer.Classes
             ////Creating widgets
             volumeSlider = GenerateSlider(audioApplication);
             text = GenerateTextBlock(_application);
-            image = GenerateImage(_application.ManagedProcess);
+            image = GenerateImage(_application);
             ////adding widgets to the wrapPanel
             
             container.Children.Add(image);
@@ -57,7 +57,6 @@ namespace VolumeMixer.Classes
         private void OnSliderValueChanged(object _sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Slider _slider = (Slider)_sender;
-            if (_slider == null) return;
             if (_slider.Value == audioApplication.ApplicationVolume) return;
             audioApplication.ApplicationVolume = (float)e.NewValue / (float)_slider.Maximum;
             Console.WriteLine(e.NewValue);
@@ -89,15 +88,17 @@ namespace VolumeMixer.Classes
             _appName.TextWrapping = TextWrapping.Wrap;
             return _appName;
         }
-        private Image GenerateImage(Process _application)
+        private Image GenerateImage(AudioApplication _application)
         {
             Image _appIcon = new Image();
             _appIcon.Width = 35;
             _appIcon.Height = 35;
             //if (_application.BasePriority == 0) return _appIcon;
             
-            DIcon _icon = Utils.GetIconFromFile(_application.BasePriority == 0 ?  Process.GetCurrentProcess().MainModule.FileName: _application.MainModule.FileName);
+
+            DIcon _icon = _application.appIcon; /*Utils.GetIconFromFile(_application.BasePriority == 0 ? Process.GetCurrentProcess().MainModule.FileName : _application.MainModule.FileName);*/
             _appIcon.Source = Utils.GetIconToBitmapImage(_icon);
+
             return _appIcon;
         }
         void RemoveController()
@@ -117,7 +118,9 @@ namespace VolumeMixer.Classes
         void OnVolumeChanged(float _newVolume)
         {
             if (_newVolume == (volumeSlider.Value / volumeSlider.Maximum)) return;
+            volumeSlider.ValueChanged -= OnSliderValueChanged;
             volumeSlider.Value = _newVolume;
+            volumeSlider.ValueChanged += OnSliderValueChanged;
         }
     }
 }
