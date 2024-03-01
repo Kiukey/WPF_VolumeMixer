@@ -29,11 +29,6 @@ namespace VolumeMixer.Classes
         {
             audioApplication = _application;
             container = new WrapPanel();
-            //container.Orientation = Orientation.Horizontal;
-            //container.HorizontalAlignment = HorizontalAlignment.Stretch;
-            //container.VerticalAlignment = VerticalAlignment.Stretch;
-            //container.ClipToBounds = true;
-            ////Creating widgets
             volumeSlider = GenerateSlider(audioApplication);
             text = GenerateTextBlock(_application);
             image = GenerateImage(_application);
@@ -58,14 +53,14 @@ namespace VolumeMixer.Classes
         {
             Slider _slider = (Slider)_sender;
             if (_slider.Value == audioApplication.ApplicationVolume) return;
-            audioApplication.ApplicationVolume = (float)e.NewValue / (float)_slider.Maximum;
+            audioApplication.ApplicationVolume = (float)e.NewValue;
             Console.WriteLine(e.NewValue);
         }
         private Slider GenerateSlider(AudioApplication _audioApp)
         {
             //slider side
             Slider _slider = new Slider();
-            _slider.Maximum = 1f;
+            _slider.Maximum = 100f;
             _slider.Value = _audioApp.ApplicationVolume;
             _slider.HorizontalAlignment = HorizontalAlignment.Center;
             _slider.VerticalAlignment = VerticalAlignment.Center;

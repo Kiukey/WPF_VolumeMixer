@@ -15,7 +15,7 @@
                 </Border>
                 <ComboBox x:Name="deviceComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="OnOutputMainDeviceChanged"/>
                 <TextBlock x:Name="___No_Name_" HorizontalAlignment="Left" Margin="198,13,0,0" TextWrapping="Wrap" Text="masterVolume" VerticalAlignment="Top" RenderTransformOrigin="0.486,-1.812" FontSize="10"/>
-                <Slider x:Name="masterVolumeSlider" Margin="290,12,0,0" VerticalAlignment="Top" ValueChanged="OnMasterVolumeChanged" Maximum="1" AutoToolTipPrecision="3" AutoToolTipPlacement="TopLeft" HorizontalAlignment="Left" Width="131"/>
+                <Slider x:Name="masterVolumeSlider" Margin="290,12,0,0" VerticalAlignment="Top" ValueChanged="OnMasterVolumeChanged" Maximum="100" AutoToolTipPrecision="3" AutoToolTipPlacement="TopLeft" HorizontalAlignment="Left" Width="131"/>
             </Grid>
         </TabItem>
 

@@ -1,51 +1,55 @@
-﻿using NAudio.CoreAudioApi;
-using NAudio.CoreAudioApi.Interfaces;
+﻿using AudioSwitcher.AudioApi;
+using AudioSwitcher.AudioApi.CoreAudio;
+using AudioSwitcher.AudioApi.Session;
+//using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace VolumeMixer.Classes
 {
-    public class Mixer
+    public class Mixer : IObserver<IAudioSession>, IObserver<DeviceVolumeChangedArgs>
     {
         public AudioApplication this[int _index] => applicationList[_index];
         public event Action<AudioApplication> onNewApplicationDiscovered = null;
         public event Action<AudioApplication> onAudioApplicationClosed = null;
         public event Action<float> onMasterVolumeChanged = null;
-        MMDevice device = null;
+        //MMDevice device = null;
+        CoreAudioDevice device = null;
         List<AudioApplication> applicationList = new List<AudioApplication>();
-        public float MasterVolume { get => device.AudioEndpointVolume.MasterVolumeLevelScalar; set => device.AudioEndpointVolume.MasterVolumeLevelScalar = value; }
+        public float MasterVolume { get => (float)device.Volume; set => device.Volume = value; }
         public int ApplicationCount => applicationList.Count;
 
         ~Mixer() 
         {
             applicationList.Clear();
         }
-        public Mixer(MMDevice _device)
+        public Mixer(CoreAudioDevice _Device)
         {
-            device = _device;
+            //device = _device;
+            device = _Device;
+            //device.Volume
             CreateAudioApplications(device);
-            device.AudioSessionManager.OnSessionCreated += OnNewAppDetected;
-            device.AudioEndpointVolume.OnVolumeNotification += OnMasterVolumeChanged;
+            device.SessionController.SessionCreated.Subscribe(this);
+            //device.AudioSessionManager.OnSessionCreated += OnNewAppDetected;
+            device.VolumeChanged.Subscribe(this);
         }
-        void CreateAudioApplications(MMDevice _device)
+        void CreateAudioApplications(CoreAudioDevice _device)
         {
-            SessionCollection _apps = _device.AudioSessionManager.Sessions;
-            int _count = _apps.Count;
+            List<IAudioSession> _sessions = _device.SessionController.ToList();
+            int _count = _sessions.Count;
             for (int i = 0; i < _count; i++)
             {
-                CreateAudioApp(_apps[i], Process.GetProcessById((int)_apps[i].GetProcessID));
+                CreateAudioApp(_sessions[i], Process.GetProcessById((int)_sessions[i].ProcessId));
             }
         }
-        void CreateAudioApp(AudioSessionControl _audioSession, Process _process)
+        void CreateAudioApp(IAudioSession _audioSession, Process _process)
         {
             AudioApplication _app = new AudioApplication(_audioSession,_process);
             _app.onProcessEnd += OnProcessEnd;
             onNewApplicationDiscovered?.Invoke(_app);
-            if(_process.BasePriority == 0)
+            if (_app.IsSystemApp)
                 applicationList.Insert(0, _app);
             else
                 applicationList.Add(_app);
@@ -56,16 +60,30 @@ namespace VolumeMixer.Classes
             applicationList.Remove(_application);
             Console.WriteLine($"app closed {_application.ProcessID}");
         }
-        void OnNewAppDetected(object _sender, IAudioSessionControl _newSession)
+
+        public void OnNext(IAudioSession value)
         {
-            AudioSessionControl _audioApp = new AudioSessionControl(_newSession);
-            CreateAudioApp(_audioApp, Process.GetProcessById((int)_audioApp.GetProcessID));
-            Console.WriteLine("new app detected");
+            AudioApplication _newApp = new AudioApplication(value, Process.GetProcessById(value.ProcessId));
+            Console.WriteLine("new app discovered");
+            applicationList.Add( _newApp );
+            onNewApplicationDiscovered?.Invoke(_newApp);
         }
 
-        void OnMasterVolumeChanged(AudioVolumeNotificationData _data)
+        public void OnError(Exception error)
         {
-            onMasterVolumeChanged?.Invoke(_data.MasterVolume);
+            //TODO pop up a window showing the error
+            throw new NotImplementedException();
+        }
+
+        public void OnCompleted()
+        {
+            
+        }
+
+        public void OnNext(DeviceVolumeChangedArgs value)
+        {
+            onMasterVolumeChanged?.Invoke((float)value.Volume);
+            Console.WriteLine(value.Volume);
         }
     }
 }

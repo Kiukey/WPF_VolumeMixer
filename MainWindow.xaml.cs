@@ -1,15 +1,11 @@
-﻿using AudioSwitcher.AudioApi;
+﻿
 using AudioSwitcher.AudioApi.CoreAudio;
-using NAudio.CoreAudioApi;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using VolumeMixer.Classes;
 using VolumeMixer.Classes.SoundInputManager;
-using DeviceRole = NAudio.CoreAudioApi.Role;
-using DeviceState = NAudio.CoreAudioApi.DeviceState;
 using DIcon = System.Drawing.Icon;
 //using AudioSwitcher.AudioApi.CoreAudio;
 //using Role = 
@@ -18,22 +14,26 @@ namespace VolumeMixer
 {
     public partial class MainWindow : Window
     {
-        Dictionary<int,MMDevice> outputDevices = new Dictionary<int,MMDevice>();
+        Dictionary<int,CoreAudioDevice> outputDevices = new Dictionary<int, CoreAudioDevice>();
         Mixer defaultDeviceMixer = null;
         SoundInputManager soundInputManager = null;
         CoreAudioController controller = null;
         public MainWindow()
         {
             InitializeComponent();
+            controller = new CoreAudioController();
             //////set up sound output
             RegisterOutputDevices();
-            defaultDeviceMixer = new Mixer(GetDefaultDevice());
+            defaultDeviceMixer = new Mixer(controller.DefaultPlaybackDevice);
             GenerateApplications(defaultDeviceMixer);
+            defaultDeviceMixer.onMasterVolumeChanged += (_newVolume) =>
+            {
+                Application.Current.Dispatcher.Invoke(() => { OnMixerMasterVolumeChanged(_newVolume);});
+            };
             defaultDeviceMixer.onNewApplicationDiscovered += (_audioApp) => 
             {
                 Application.Current.Dispatcher.Invoke(() => { GenerateOutputUI(_audioApp); });
             };
-            controller = new CoreAudioController();
             masterVolumeSlider.Value = defaultDeviceMixer.MasterVolume;
             ////
 
@@ -45,12 +45,11 @@ namespace VolumeMixer
         }
 
         #region output(Mixer to rework maybe)
-        private MMDevice GetDefaultDevice()
+        private CoreAudioDevice GetDefaultDevice()
         {
-            MMDeviceEnumerator _outPutList = new MMDeviceEnumerator();
-            return _outPutList.GetDefaultAudioEndpoint(DataFlow.Render, DeviceRole.Multimedia & DeviceRole.Communications & DeviceRole.Console);
+            return controller.DefaultPlaybackDevice;
         }
-        private List<MMDevice> GetAllDevices()
+        private List<CoreAudioDevice> GetAllDevices()
         {
             return outputDevices.Values.ToList();
         }
@@ -63,18 +62,10 @@ namespace VolumeMixer
         }
         void RegisterOutputDevices()
         {
-            MMDeviceEnumerator _outputList = new MMDeviceEnumerator();
-            MMDeviceCollection _allDevices = _outputList.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
-            for (int i = 0; i < _allDevices.Count; i++)
-            {
-                MMDevice _device = _allDevices[i];
-                outputDevices.Add(i, _device);
-                deviceComboBox.Items.Add(_device.FriendlyName);
-                if (_device.FriendlyName == GetDefaultDevice().FriendlyName)
-                {
-                    deviceComboBox.SelectedIndex = deviceComboBox.Items.Count - 1;
-                }
-            }
+            List<CoreAudioDevice> _devices = controller.GetPlaybackDevices(AudioSwitcher.AudioApi.DeviceState.Active).ToList();
+            deviceComboBox.ItemsSource = _devices;
+            deviceComboBox.DisplayMemberPath = "FullName";
+            deviceComboBox.SelectedItem = controller.DefaultPlaybackDevice;
         }
         void GenerateOutputUI(AudioApplication _application)
         {
@@ -89,14 +80,14 @@ namespace VolumeMixer
         private void OnOutputMainDeviceChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             ComboBox _sender = (ComboBox)sender;
-            if (_sender == null || !outputDevices.ContainsKey(_sender.SelectedIndex)) return;
-            MMDevice _defaultDevice = outputDevices[_sender.SelectedIndex];
-            if (_defaultDevice.FriendlyName == GetDefaultDevice().FriendlyName) return;
-            controller.SetDefaultDevice(GetDeviceFromController(_defaultDevice));
+            if (_sender == null) return;
+            CoreAudioDevice _defaultDevice = outputDevices[_sender.SelectedIndex];
+            if (_defaultDevice.Name == GetDefaultDevice().Name) return;
+            controller.SetDefaultDevice(_defaultDevice);
             RefreshMixer(_defaultDevice);
 
         }
-        void RefreshMixer(MMDevice _device)
+        void RefreshMixer(CoreAudioDevice _device)
         {
             defaultDeviceMixer = null;
             defaultDeviceMixer = new Mixer(_device);
@@ -108,7 +99,14 @@ namespace VolumeMixer
         {
             Slider _slider = (Slider)_sender;
             if (_slider == null) return;
-            defaultDeviceMixer.MasterVolume = (float)e.NewValue / (float)_slider.Maximum; //TODO divide by max
+            defaultDeviceMixer.MasterVolume = (float)e.NewValue;
+        }
+        private void OnMixerMasterVolumeChanged(float _newVolume)
+        {
+            if (masterVolumeSlider == null) return;
+            masterVolumeSlider.ValueChanged -= OnMasterVolumeChanged;
+            masterVolumeSlider.Value = _newVolume;
+            masterVolumeSlider.ValueChanged += OnMasterVolumeChanged;
         }
         #endregion
         #region Input
@@ -127,24 +125,11 @@ namespace VolumeMixer
             soundInputManager.SetDefaultInputDevice(_device);
             //controller.DefaultCaptureDevice = (CoreAudioDevice)_box.SelectedItem;
         }
-        #endregion
-        #region utils
-        CoreAudioDevice GetDeviceFromController(MMDevice _device)
-        {
-            List<CoreAudioDevice> _devices = controller.GetDevices(DeviceType.Playback,AudioSwitcher.AudioApi.DeviceState.Active).ToList();
-            foreach (CoreAudioDevice _item in _devices)
-            {
-                Console.WriteLine(_item.FullName);
-                if (_item.FullName == _device.FriendlyName) return _item;
-            }
-            return null;
-        }
-
-        #endregion
         private void OnMicrophoneVolumeChanged(object _sender, RoutedPropertyChangedEventArgs<double> _e)
         {
             soundInputManager.InputDeviceVolumeScaled = (float)_e.NewValue;
         }
+        #endregion
     }
 }
 
