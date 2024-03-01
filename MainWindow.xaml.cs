@@ -66,6 +66,11 @@ namespace VolumeMixer
             deviceComboBox.ItemsSource = _devices;
             deviceComboBox.DisplayMemberPath = "FullName";
             deviceComboBox.SelectedItem = controller.DefaultPlaybackDevice;
+            int _count = _devices.Count;
+            for (int i = 0; i < _count; i++)
+            {
+                outputDevices.Add(i, _devices[i]);
+            }
         }
         void GenerateOutputUI(AudioApplication _application)
         {
@@ -80,7 +85,7 @@ namespace VolumeMixer
         private void OnOutputMainDeviceChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             ComboBox _sender = (ComboBox)sender;
-            if (_sender == null) return;
+            if (_sender == null || !outputDevices.ContainsKey(_sender.SelectedIndex)) return;
             CoreAudioDevice _defaultDevice = outputDevices[_sender.SelectedIndex];
             if (_defaultDevice.Name == GetDefaultDevice().Name) return;
             controller.SetDefaultDevice(_defaultDevice);
