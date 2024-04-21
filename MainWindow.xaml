@@ -28,5 +28,12 @@
             </Grid>
         </TabItem>
 
+        <TabItem Header="Discord">
+            <Grid>
+                <Button Name="AuthorizationButton" Content="Get Code" HorizontalAlignment="Left" Margin="380,19,0,0" VerticalAlignment="Top" RenderTransformOrigin="-1.715,0.857" Width="64" Click="AuthorizationButton_Click"/>
+                <TextBox Name="codeTextBox" HorizontalAlignment="Left" Margin="29,21,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="198"/>
+                <Button Name = "ValidateCodeButton" Content="Connect" HorizontalAlignment="Left" Margin="257,20,0,0" VerticalAlignment="Top" Width="103" Click="ValidateCodeButton_Click"/>
+            </Grid>
+        </TabItem>
     </TabControl>
 </Window>
