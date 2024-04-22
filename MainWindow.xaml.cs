@@ -1,16 +1,11 @@
 ﻿
 using AudioSwitcher.AudioApi.CoreAudio;
-using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using VolumeMixer.Classes;
 using VolumeMixer.Classes.SoundInputManager;
-using DIcon = System.Drawing.Icon;
-//using AudioSwitcher.AudioApi.CoreAudio;
-//using Role = 
 
 namespace VolumeMixer
 {
@@ -39,15 +34,12 @@ namespace VolumeMixer
             };
             masterVolumeSlider.Value = defaultDeviceMixer.MasterVolume;
             ////
-
             ////set up sound input
             soundInputManager = new SoundInputManager(controller.DefaultCaptureDevice);
             RegisterInputDevices();
+            //if(soundInputManager)
             microphoneVolume.Value = soundInputManager.InputDeviceVolumeScaled;
             //
-
-            //Discord
-            discord = new DiscordWrapper();
         }
 
         #region output(Mixer to rework maybe)
@@ -151,7 +143,12 @@ namespace VolumeMixer
         private void ValidateCodeButton_Click(object sender, RoutedEventArgs e)
         {
             if (discord == null) return;
-            discord.Connect(codeTextBox.Text);
+            discord.Initilize(codeTextBox.Text);
+        }
+
+        private void ApplicationList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
         }
     }
 }

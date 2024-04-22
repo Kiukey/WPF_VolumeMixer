@@ -38,6 +38,7 @@ namespace VolumeMixer.Classes
                 ProcessName = application.BasePriority == 0 ? "SystemSounds" : ManagedProcess.ProcessName;
                 Console.WriteLine("no enough permission");
             }
+
         }
 
         ~AudioApplication()

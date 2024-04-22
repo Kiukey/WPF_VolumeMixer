@@ -11,7 +11,7 @@
         <TabItem Header="Mixer">
             <Grid>
                 <Border BorderBrush="Black" BorderThickness="1" Margin="10,48,10,11">
-                    <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch" Background="#3FFFFFFF" BorderBrush="#00ABADB3" Foreground="Black"/>
+                    <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch" Background="#3FFFFFFF" BorderBrush="#00ABADB3" Foreground="Black" SelectionChanged="ApplicationList_SelectionChanged"/>
                 </Border>
                 <ComboBox x:Name="deviceComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="OnOutputMainDeviceChanged"/>
                 <TextBlock x:Name="___No_Name_" HorizontalAlignment="Left" Margin="198,13,0,0" TextWrapping="Wrap" Text="masterVolume" VerticalAlignment="Top" RenderTransformOrigin="0.486,-1.812" FontSize="10"/>
