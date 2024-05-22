@@ -11,7 +11,7 @@
         <TabItem Header="Mixer">
             <Grid>
                 <Border BorderBrush="Black" BorderThickness="1" Margin="10,48,10,11">
-                    <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch" Background="#3FFFFFFF" BorderBrush="#00ABADB3" Foreground="Black" SelectionChanged="ApplicationList_SelectionChanged"/>
+                    <ListView x:Name="ApplicationList" HorizontalContentAlignment="Stretch" Background="#3FFFFFFF" BorderBrush="#00ABADB3" Foreground="Black"/>
                 </Border>
                 <ComboBox x:Name="deviceComboBox" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="150" SelectionChanged="OnOutputMainDeviceChanged"/>
                 <TextBlock x:Name="___No_Name_" HorizontalAlignment="Left" Margin="198,13,0,0" TextWrapping="Wrap" Text="masterVolume" VerticalAlignment="Top" RenderTransformOrigin="0.486,-1.812" FontSize="10"/>
@@ -25,14 +25,6 @@
                 <Label Content="Mic Volume" HorizontalAlignment="Left" Margin="83,109,0,0" VerticalAlignment="Top" Width="65" Height="22" UseLayoutRounding="False" FontSize="10"/>
                 <Slider x:Name="microphoneVolume" Margin="163,113,0,0" HorizontalAlignment="Left" Width="230" Height="18" VerticalAlignment="Top" ValueChanged="OnMicrophoneVolumeChanged" Maximum="1"/>
                 <Image x:Name="devicePicture" HorizontalAlignment="Left" Height="46" Margin="20,100,0,0" VerticalAlignment="Top" Width="45" Source ="Ressources\free-microphone-icon-342-thumb.png"/>
-            </Grid>
-        </TabItem>
-
-        <TabItem Header="Discord">
-            <Grid>
-                <Button Name="AuthorizationButton" Content="Get Code" HorizontalAlignment="Left" Margin="380,19,0,0" VerticalAlignment="Top" RenderTransformOrigin="-1.715,0.857" Width="64" Click="AuthorizationButton_Click"/>
-                <TextBox Name="codeTextBox" HorizontalAlignment="Left" Margin="29,21,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="198"/>
-                <Button Name = "ValidateCodeButton" Content="Connect" HorizontalAlignment="Left" Margin="257,20,0,0" VerticalAlignment="Top" Width="103" Click="ValidateCodeButton_Click"/>
             </Grid>
         </TabItem>
     </TabControl>

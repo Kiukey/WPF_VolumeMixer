@@ -134,22 +134,6 @@ namespace VolumeMixer
         }
         #endregion
 
-        private void AuthorizationButton_Click(object sender, RoutedEventArgs e)
-        {
-            if(discord == null) return;
-            discord.AskPermission();
-        }
-
-        private void ValidateCodeButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (discord == null) return;
-            discord.Initilize(codeTextBox.Text);
-        }
-
-        private void ApplicationList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
     }
 }
 
