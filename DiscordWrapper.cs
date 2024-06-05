@@ -21,10 +21,7 @@ namespace VolumeMixer
         public DiscordWrapper()
         {
             httpClient = new HttpClient();
-
-
         }
-
         public async void Initilize(string _code)
         {
             //client = new DiscordRestClient();
@@ -37,10 +34,7 @@ namespace VolumeMixer
             //GetCurrentChannel();
             //await client.LoginAsync(TokenType.Bearer,_token);
             //client.
-
-
         }
-
         async Task<string> GetAccessTokenAsync(string code)
         {
             Dictionary<string, string> tokenRequestParameters = new Dictionary<string, string>

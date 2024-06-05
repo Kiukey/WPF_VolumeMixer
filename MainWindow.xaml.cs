@@ -1,5 +1,7 @@
 ﻿
+using AudioSwitcher.AudioApi;
 using AudioSwitcher.AudioApi.CoreAudio;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -11,11 +13,11 @@ namespace VolumeMixer
 {
     public partial class MainWindow : Window
     {
-        Dictionary<int,CoreAudioDevice> outputDevices = new Dictionary<int, CoreAudioDevice>();
+        Dictionary<int, CoreAudioDevice> outputDevices = new Dictionary<int, CoreAudioDevice>();
         Mixer defaultDeviceMixer = null;
         SoundInputManager soundInputManager = null;
         CoreAudioController controller = null;
-        DiscordWrapper discord = null;
+        //DiscordWrapper discord = null;
         public MainWindow()
         {
             InitializeComponent();
@@ -26,9 +28,9 @@ namespace VolumeMixer
             GenerateApplications(defaultDeviceMixer);
             defaultDeviceMixer.onMasterVolumeChanged += (_newVolume) =>
             {
-                Application.Current.Dispatcher.Invoke(() => { OnMixerMasterVolumeChanged(_newVolume);});
+                Application.Current.Dispatcher.Invoke(() => { OnMixerMasterVolumeChanged(_newVolume); });
             };
-            defaultDeviceMixer.onNewApplicationDiscovered += (_audioApp) => 
+            defaultDeviceMixer.onNewApplicationDiscovered += (_audioApp) =>
             {
                 Application.Current.Dispatcher.Invoke(() => { GenerateOutputUI(_audioApp); });
             };
@@ -36,6 +38,11 @@ namespace VolumeMixer
             ////
             ////set up sound input
             soundInputManager = new SoundInputManager(controller.DefaultCaptureDevice);
+            //controller.AudioDeviceChanged.Subscribe<DeviceChangedArgs>(OnDeviceChanged);
+            //controller.AudioDeviceChanged.Subscribe<DeviceChangedArgs>((_args) =>
+            //{
+            //    Application.Current.Dispatcher.Invoke(() => OnDeviceChanged(_args));
+            //});
             RegisterInputDevices();
             //if(soundInputManager)
             microphoneVolume.Value = soundInputManager.InputDeviceVolumeScaled;
@@ -61,13 +68,13 @@ namespace VolumeMixer
         void RegisterOutputDevices()
         {
             List<CoreAudioDevice> _devices = controller.GetPlaybackDevices(AudioSwitcher.AudioApi.DeviceState.Active).ToList();
-            deviceComboBox.ItemsSource = _devices;
             deviceComboBox.DisplayMemberPath = "FullName";
             deviceComboBox.SelectedItem = controller.DefaultPlaybackDevice;
             int _count = _devices.Count;
             for (int i = 0; i < _count; i++)
             {
                 outputDevices.Add(i, _devices[i]);
+                deviceComboBox.Items.Add(_devices[i]);
             }
         }
         void GenerateOutputUI(AudioApplication _application)
@@ -116,9 +123,13 @@ namespace VolumeMixer
         void RegisterInputDevices()
         {
             List<CoreAudioDevice> _devices = controller.GetCaptureDevices(AudioSwitcher.AudioApi.DeviceState.Active).ToList();
-            captureDevicesComboBox.ItemsSource = _devices;
+            //captureDevicesComboBox.ItemsSource = _devices;
             captureDevicesComboBox.DisplayMemberPath = "FullName";
             captureDevicesComboBox.SelectedItem = controller.DefaultCaptureDevice;
+            foreach (CoreAudioDevice _device in _devices)
+            {
+                captureDevicesComboBox.Items.Add(_device);
+            }
         }
         private void OnInputDeviceChanged(object _sender, SelectionChangedEventArgs e)
         {
@@ -132,6 +143,53 @@ namespace VolumeMixer
         {
             soundInputManager.InputDeviceVolumeScaled = (float)_e.NewValue;
         }
+        #endregion
+        //void RemoveDevice(IDevice _device)
+        //{
+        //    if (captureDevicesComboBox.Items.Contains((CoreAudioDevice)_device))
+        //    {
+        //        bool _shouldRefreshDisplay = captureDevicesComboBox.SelectedItem == _device;
+        //        if (_shouldRefreshDisplay)
+        //            captureDevicesComboBox.SelectedItem = controller.DefaultCaptureDevice;
+        //        captureDevicesComboBox.Items.Remove((CoreAudioDevice)_device);
+        //    }
+        //    if (deviceComboBox.Items.Contains((CoreAudioDevice)_device))
+        //    {
+        //        bool _shouldRefreshMixer = deviceComboBox.SelectedItem == _device;
+        //        if (_shouldRefreshMixer)
+        //            deviceComboBox.SelectedItem = controller.DefaultPlaybackDevice;
+        //        deviceComboBox.Items.Remove((CoreAudioDevice)_device);
+        //    }
+        //}
+        //void AddDevice(IDevice _device)
+        //{
+        //    if (_device.IsCaptureDevice)
+        //        captureDevicesComboBox.Items.Add((CoreAudioDevice)_device);
+        //    if (_device.IsPlaybackDevice)
+        //        deviceComboBox.Items.Add((CoreAudioDevice)_device);
+        //}
+        #region Interface Methods
+        //public void OnDeviceChanged(DeviceChangedArgs _value)
+        //{
+        //    switch (_value.ChangedType)
+        //    {
+        //        //case DeviceChangedType.DefaultChanged:
+        //        //    deviceComboBox.SelectedItem = _value.Device;
+        //        //    break;
+        //        //case DeviceChangedType.DeviceAdded:
+        //        //    deviceComboBox.Items.Add((CoreAudioDevice)_value.Device);
+        //        //    break;
+        //        case DeviceChangedType.StateChanged:
+        //            {
+        //                if (_value.Device.State == DeviceState.NotPresent)
+        //                    RemoveDevice(_value.Device);
+        //                break;
+        //            }
+                    
+        //    }
+        //    Console.WriteLine(_value.ChangedType.ToString() + " | " + ((CoreAudioDevice)_value.Device).FullName + " | " + _value.Device.State.ToString());
+        //}
+
         #endregion
 
     }
@@ -147,12 +205,10 @@ namespace VolumeMixer
 //_slider.ValueChanged += OnSliderChanged;
 //_slider.Maximum = 1f;
 //_slider.Value = _app.SimpleAudioVolume.Volume;
-
 //TextBlock _appName = new TextBlock();
 //NameLayoutPanel.Children.Add(_appName);
 //_appName.Text = _application.ProcessName;
 //_appName.Margin = _slider.Margin;
-
 //Console.WriteLine($" salut ? {_application.BasePriority}");
 //if (_application.BasePriority ==0 ) return;
 //DIcon _icon = DIcon.ExtractAssociatedIcon(_application.MainModule.FileName); 
@@ -162,7 +218,6 @@ namespace VolumeMixer
 //_appIcon.Width = 35;
 //_appIcon.Height = 35;
 //_appIcon.Margin = new Thickness(0,20,0,0);
-
 //Slider GenerateSlider(AudioSessionControl _audioApp)
 //{
 //    //slider side
@@ -176,7 +231,6 @@ namespace VolumeMixer
 //    _slider.Value = _audioApp.SimpleAudioVolume.Volume;
 //    return _slider;
 //}
-
 //{
 //    //name side
 //    TextBlock _appName = new TextBlock();

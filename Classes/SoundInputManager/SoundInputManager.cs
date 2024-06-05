@@ -21,10 +21,10 @@ namespace VolumeMixer.Classes.SoundInputManager
         {
             defaultDevice = _inputDevice;
         }
-
         public void SetDefaultInputDevice(CoreAudioDevice _inputDevice)
         {
             defaultDevice = _inputDevice;
+            if (defaultDevice == null) return;
             defaultDevice.Controller.DefaultCaptureDevice = _inputDevice;
         }
     }

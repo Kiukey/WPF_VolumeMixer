@@ -1,7 +1,7 @@
 ﻿using AudioSwitcher.AudioApi;
 using AudioSwitcher.AudioApi.CoreAudio;
 using AudioSwitcher.AudioApi.Session;
-using NAudio.CoreAudioApi;
+//using NAudio.CoreAudioApi;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,10 +35,6 @@ namespace VolumeMixer.Classes
             device.SessionController.SessionCreated.Subscribe(this);
             //device.AudioSessionManager.OnSessionCreated += OnNewAppDetected;
             device.VolumeChanged.Subscribe(this);
-
-            MMDevice _device;
-
-            
         }
         void CreateAudioApplications(CoreAudioDevice _device)
         {
@@ -79,10 +75,8 @@ namespace VolumeMixer.Classes
             //TODO pop up a window showing the error
             throw new NotImplementedException();
         }
-
         public void OnCompleted()
         {
-            
         }
         public void OnNext(DeviceVolumeChangedArgs value)
         {
