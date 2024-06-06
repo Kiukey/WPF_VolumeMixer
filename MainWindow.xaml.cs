@@ -69,7 +69,7 @@ namespace VolumeMixer
         }
         void RegisterOutputDevices()
         {
-            List<CoreAudioDevice> _devices = controller.GetPlaybackDevices(AudioSwitcher.AudioApi.DeviceState.Active).ToList();
+            List<CoreAudioDevice> _devices = controller.GetPlaybackDevices(DeviceState.Active).ToList();
             deviceComboBox.DisplayMemberPath = "FullName";
             deviceComboBox.SelectedItem = controller.DefaultPlaybackDevice;
             int _count = _devices.Count;

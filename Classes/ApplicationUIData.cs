@@ -54,7 +54,6 @@ namespace VolumeMixer.Classes
             Slider _slider = (Slider)_sender;
             if (_slider.Value == audioApplication.ApplicationVolume) return;
             audioApplication.ApplicationVolume = (float)e.NewValue;
-            Console.WriteLine(e.NewValue);
         }
         private Slider GenerateSlider(AudioApplication _audioApp)
         {
