@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows;
 
 namespace VolumeMixer.Classes
 {
@@ -15,7 +16,6 @@ namespace VolumeMixer.Classes
         public event Action<AudioApplication> onNewApplicationDiscovered = null;
         public event Action<AudioApplication> onAudioApplicationClosed = null;
         public event Action<float> onMasterVolumeChanged = null;
-        //MMDevice device = null;
         CoreAudioDevice device = null;
         List<AudioApplication> applicationList = new List<AudioApplication>();
         public float MasterVolume { get => (float)device.Volume; set => device.Volume = value; }
@@ -25,15 +25,11 @@ namespace VolumeMixer.Classes
         {
             applicationList.Clear();
         }
-
         public Mixer(CoreAudioDevice _Device)
         {
-            //device = _device;
             device = _Device;
-            //device.Volume
             CreateAudioApplications(device);
             device.SessionController.SessionCreated.Subscribe(this);
-            //device.AudioSessionManager.OnSessionCreated += OnNewAppDetected;
             device.VolumeChanged.Subscribe(this);
         }
         void CreateAudioApplications(CoreAudioDevice _device)
@@ -59,21 +55,18 @@ namespace VolumeMixer.Classes
         {
             onAudioApplicationClosed?.Invoke(_application);
             applicationList.Remove(_application);
-            Console.WriteLine($"app closed {_application.ProcessID}");
         }
-
         public void OnNext(IAudioSession value)
         {
             AudioApplication _newApp = new AudioApplication(value, Process.GetProcessById(value.ProcessId));
-            Console.WriteLine("new app discovered");
             applicationList.Add( _newApp );
             onNewApplicationDiscovered?.Invoke(_newApp);
         }
 
+        #region masterVolumeInterfaceMethods
         public void OnError(Exception error)
         {
-            //TODO pop up a window showing the error
-            throw new NotImplementedException();
+            MessageBox.Show(error.ToString());
         }
         public void OnCompleted()
         {
@@ -83,5 +76,6 @@ namespace VolumeMixer.Classes
             onMasterVolumeChanged?.Invoke((float)value.Volume);
             Console.WriteLine(value.Volume);
         }
+        #endregion
     }
 }

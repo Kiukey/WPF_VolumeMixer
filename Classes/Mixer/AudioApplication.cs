@@ -1,6 +1,7 @@
 ﻿using AudioSwitcher.AudioApi.Session;
 using System;
 using System.Diagnostics;
+using System.Windows;
 using DIcon = System.Drawing.Icon;
 
 namespace VolumeMixer.Classes
@@ -36,7 +37,6 @@ namespace VolumeMixer.Classes
             {
                 appIcon = Utils.GetIconFromFile(Process.GetCurrentProcess().MainModule.FileName);
                 ProcessName = application.BasePriority == 0 ? "SystemSounds" : ManagedProcess.ProcessName;
-                Console.WriteLine("no enough permission");
             }
 
         }
@@ -49,18 +49,15 @@ namespace VolumeMixer.Classes
         {
             onProcessEnd.Invoke(this);
         }
-
         public void OnNext(SessionVolumeChangedArgs value)
         {
             onVolumeChanged?.Invoke((float)value.Volume);   
         }
-
         public void OnError(Exception error)
         {
             //TODO pop up a window showing the errors
-            throw new Exception();
+            MessageBox.Show(error.ToString());
         }
-
         public void OnCompleted()
         {
         }

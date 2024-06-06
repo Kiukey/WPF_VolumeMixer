@@ -13,10 +13,12 @@ namespace VolumeMixer
 {
     public partial class MainWindow : Window
     {
-        Dictionary<int, CoreAudioDevice> outputDevices = new Dictionary<int, CoreAudioDevice>();
+        //Dictionary<int, CoreAudioDevice> outputDevices = new Dictionary<int, CoreAudioDevice>();
+        List<CoreAudioDevice> outputDevices = new List<CoreAudioDevice>();
         Mixer defaultDeviceMixer = null;
         SoundInputManager soundInputManager = null;
         CoreAudioController controller = null;
+        IDisposable disposable = null;
         //DiscordWrapper discord = null;
         public MainWindow()
         {
@@ -39,14 +41,14 @@ namespace VolumeMixer
             ////set up sound input
             soundInputManager = new SoundInputManager(controller.DefaultCaptureDevice);
             //controller.AudioDeviceChanged.Subscribe<DeviceChangedArgs>(OnDeviceChanged);
-            //controller.AudioDeviceChanged.Subscribe<DeviceChangedArgs>((_args) =>
-            //{
-            //    Application.Current.Dispatcher.Invoke(() => OnDeviceChanged(_args));
-            //});
             RegisterInputDevices();
             //if(soundInputManager)
             microphoneVolume.Value = soundInputManager.InputDeviceVolumeScaled;
             //
+            disposable = controller.AudioDeviceChanged.Subscribe<DeviceChangedArgs>((_args) =>
+            {
+                Application.Current.Dispatcher.Invoke(() => OnDeviceChanged(_args));
+            });
         }
 
         #region output(Mixer to rework maybe)
@@ -56,7 +58,7 @@ namespace VolumeMixer
         }
         private List<CoreAudioDevice> GetAllDevices()
         {
-            return outputDevices.Values.ToList();
+            return outputDevices;
         }
         private void GenerateApplications(Mixer _mixer)
         {
@@ -73,7 +75,8 @@ namespace VolumeMixer
             int _count = _devices.Count;
             for (int i = 0; i < _count; i++)
             {
-                outputDevices.Add(i, _devices[i]);
+                //outputDevices.Add(i, _devices[i]);
+                outputDevices.Add(_devices[i]);
                 deviceComboBox.Items.Add(_devices[i]);
             }
         }
@@ -90,10 +93,17 @@ namespace VolumeMixer
         private void OnOutputMainDeviceChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             ComboBox _sender = (ComboBox)sender;
-            if (_sender == null || !outputDevices.ContainsKey(_sender.SelectedIndex)) return;
+            //if (_sender == null || !outputDevices.Contains(_sender.SelectedIndex)) return;
+            if (_sender == null || _sender.SelectedIndex > outputDevices.Count) return;
             CoreAudioDevice _defaultDevice = outputDevices[_sender.SelectedIndex];
             if (_defaultDevice.Name == GetDefaultDevice().Name) return;
+
+            disposable.Dispose();
             controller.SetDefaultDevice(_defaultDevice);
+            disposable = controller.AudioDeviceChanged.Subscribe<DeviceChangedArgs>((_args) =>
+            {
+                Application.Current.Dispatcher.Invoke(() => OnDeviceChanged(_args));
+            });
             RefreshMixer(_defaultDevice);
 
         }
@@ -144,51 +154,64 @@ namespace VolumeMixer
             soundInputManager.InputDeviceVolumeScaled = (float)_e.NewValue;
         }
         #endregion
-        //void RemoveDevice(IDevice _device)
-        //{
-        //    if (captureDevicesComboBox.Items.Contains((CoreAudioDevice)_device))
-        //    {
-        //        bool _shouldRefreshDisplay = captureDevicesComboBox.SelectedItem == _device;
-        //        if (_shouldRefreshDisplay)
-        //            captureDevicesComboBox.SelectedItem = controller.DefaultCaptureDevice;
-        //        captureDevicesComboBox.Items.Remove((CoreAudioDevice)_device);
-        //    }
-        //    if (deviceComboBox.Items.Contains((CoreAudioDevice)_device))
-        //    {
-        //        bool _shouldRefreshMixer = deviceComboBox.SelectedItem == _device;
-        //        if (_shouldRefreshMixer)
-        //            deviceComboBox.SelectedItem = controller.DefaultPlaybackDevice;
-        //        deviceComboBox.Items.Remove((CoreAudioDevice)_device);
-        //    }
-        //}
-        //void AddDevice(IDevice _device)
-        //{
-        //    if (_device.IsCaptureDevice)
-        //        captureDevicesComboBox.Items.Add((CoreAudioDevice)_device);
-        //    if (_device.IsPlaybackDevice)
-        //        deviceComboBox.Items.Add((CoreAudioDevice)_device);
-        //}
+
+        void RemoveDevice(IDevice _device)
+        {
+            if (captureDevicesComboBox.Items.Contains((CoreAudioDevice)_device))
+            {
+                bool _shouldRefreshDisplay = captureDevicesComboBox.SelectedItem == _device;
+                if (_shouldRefreshDisplay)
+                    captureDevicesComboBox.SelectedItem = controller.DefaultCaptureDevice;
+                captureDevicesComboBox.Items.Remove((CoreAudioDevice)_device);
+            }
+            if (deviceComboBox.Items.Contains((CoreAudioDevice)_device))
+            {
+                bool _shouldRefreshMixer = deviceComboBox.SelectedItem == _device;
+                if (_shouldRefreshMixer)
+                {
+                    deviceComboBox.SelectedItem = controller.DefaultPlaybackDevice;
+                }
+                deviceComboBox.Items.Remove((CoreAudioDevice)_device);
+                outputDevices.Remove((CoreAudioDevice)_device);
+            }
+        }
+        void AddDevice(IDevice _device)
+        {
+            if (_device.IsCaptureDevice)
+            {
+                captureDevicesComboBox.Items.Add((CoreAudioDevice)_device);
+                //outputDevices.Add()
+            }
+            if (_device.IsPlaybackDevice)
+            {
+                deviceComboBox.Items.Add((CoreAudioDevice)_device);
+                outputDevices.Add((CoreAudioDevice)_device);
+            }
+        }
         #region Interface Methods
-        //public void OnDeviceChanged(DeviceChangedArgs _value)
-        //{
-        //    switch (_value.ChangedType)
-        //    {
-        //        //case DeviceChangedType.DefaultChanged:
-        //        //    deviceComboBox.SelectedItem = _value.Device;
-        //        //    break;
-        //        //case DeviceChangedType.DeviceAdded:
-        //        //    deviceComboBox.Items.Add((CoreAudioDevice)_value.Device);
-        //        //    break;
-        //        case DeviceChangedType.StateChanged:
-        //            {
-        //                if (_value.Device.State == DeviceState.NotPresent)
-        //                    RemoveDevice(_value.Device);
-        //                break;
-        //            }
-                    
-        //    }
-        //    Console.WriteLine(_value.ChangedType.ToString() + " | " + ((CoreAudioDevice)_value.Device).FullName + " | " + _value.Device.State.ToString());
-        //}
+        public void OnDeviceChanged(DeviceChangedArgs _value)
+        {
+            Console.WriteLine(_value.ChangedType.ToString() + " | " + ((CoreAudioDevice)_value.Device).FullName + " | " + _value.Device.State.ToString());
+            switch (_value.ChangedType)
+            {
+                case DeviceChangedType.DefaultChanged:
+                    deviceComboBox.SelectedItem = _value.Device;
+                    RefreshMixer((CoreAudioDevice)_value.Device);
+                    break;
+                //case DeviceChangedType.DeviceAdded:
+                //    deviceComboBox.Items.Add((CoreAudioDevice)_value.Device);
+                //    break;
+                case DeviceChangedType.StateChanged:
+                {
+                    if (_value.Device.State == DeviceState.NotPresent)
+                        RemoveDevice(_value.Device);
+                    else if (_value.Device.State == DeviceState.Active)
+                        AddDevice(_value.Device);
+                    break;
+                }
+                
+            }
+        }
 
         #endregion
 
