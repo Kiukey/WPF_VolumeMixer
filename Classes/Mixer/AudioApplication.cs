@@ -19,7 +19,6 @@ namespace VolumeMixer.Classes
         public DIcon appIcon { get; private set;}
         public IAudioSession AudioSession => audioSession;
         public bool IsSystemApp => audioSession.IsSystemSession;
-
         public AudioApplication(IAudioSession _audioSession, Process _application)
         {
             audioSession = _audioSession;
@@ -40,11 +39,9 @@ namespace VolumeMixer.Classes
             }
 
         }
-
         ~AudioApplication()
         { 
         }
-
         private void OnProcessEnd(object sender,EventArgs e)
         {
             onProcessEnd.Invoke(this);

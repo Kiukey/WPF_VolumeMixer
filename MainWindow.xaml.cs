@@ -50,7 +50,6 @@ namespace VolumeMixer
                 Application.Current.Dispatcher.Invoke(() => OnDeviceChanged(_args));
             });
         }
-
         #region output(Mixer to rework maybe)
         private CoreAudioDevice GetDefaultDevice()
         {
@@ -90,6 +89,11 @@ namespace VolumeMixer
         {
             ApplicationList.Items.Remove(_closed.Container);
         }
+        /// <summary>
+        /// Methods binded by XAML, change the device displayed in the comboBox and Refresh the mixer
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnOutputMainDeviceChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             ComboBox _sender = (ComboBox)sender;
@@ -141,16 +145,28 @@ namespace VolumeMixer
                 captureDevicesComboBox.Items.Add(_device);
             }
         }
+        /// <summary>
+        /// Methods binded by XAML, change the device displayed in the comboBox and change the volume displayed by the slider
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnInputDeviceChanged(object _sender, SelectionChangedEventArgs e)
         {
             ComboBox _box = (ComboBox)_sender;
             if (_box == null) return;
             CoreAudioDevice _device = (CoreAudioDevice)_box.SelectedItem;
             soundInputManager.SetDefaultInputDevice(_device);
+            microphoneVolume.Value = soundInputManager.InputDeviceVolumeScaled * 100;
             //controller.DefaultCaptureDevice = (CoreAudioDevice)_box.SelectedItem;
         }
+        /// <summary>
+        /// Methods binded by XAML, change the value of the mic to the value of the slider
+        /// </summary>
+        /// <param name="_sender"></param>
+        /// <param name="_e"></param>
         private void OnMicrophoneVolumeChanged(object _sender, RoutedPropertyChangedEventArgs<double> _e)
         {
+            if (soundInputManager == null) return;
             soundInputManager.InputDeviceVolumeScaled = (float)_e.NewValue;
         }
         #endregion
